@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean sem velit, blandit quis tincidunt in, lacinia et ipsum. Nam consequat luctus turpis ut euismod. Maecenas in justo eu leo auctor ornare. Donec varius ornare tincidunt. Nam a tortor euismod, vehicula massa in, gravida arcu. Curabitur varius fermentum lacus id aliquam"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean sem velit, blandit quis tincidunt in, lacinia et ipsum. Nam consequat luctus turpis ut euismod. Maecenas in justo eu leo auctor ornare. Donec varius ornare tincidunt. Nam a tortor euismod, vehicula massa in, gravida arcu. Curabitur varius fermentum lacus id aliquam"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"/>
+<TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean sem velit, blandit quis tincidunt in, lacinia et ipsum. Nam consequat luctus turpis ut euismod. Maecenas in justo eu leo auctor ornare. Donec varius ornare tincidunt. Nam a tortor euismod, vehicula massa in, gravida arcu. Curabitur varius fermentum lacus id aliquam"/>
+
+    </LinearLayout>
+
+</android.support.v7.widget.CardView>
