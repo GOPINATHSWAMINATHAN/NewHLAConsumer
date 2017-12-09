@@ -15,8 +15,7 @@ public class FCMResponse {
     public int canonical_ids;
     public List<Result> results;
 
-    public FCMResponse()
-    {
+    public FCMResponse() {
 
     }
 

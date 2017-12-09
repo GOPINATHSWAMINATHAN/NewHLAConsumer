@@ -5,11 +5,12 @@ package com.hlacab.hla.model;
  */
 
 public class Rider {
-    String name,email,phone,password;
-public Rider()
-{
+    String name, email, phone, password;
 
-}
+    public Rider() {
+
+    }
+
     public Rider(String name, String email, String phone, String password) {
         this.name = name;
         this.email = email;

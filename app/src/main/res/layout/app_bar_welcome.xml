@@ -80,6 +80,7 @@
                     android:layout_height="wrap_content"
                     android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"/>
             </LinearLayout>
+
         </LinearLayout>
 
     </android.support.v7.widget.CardView>
