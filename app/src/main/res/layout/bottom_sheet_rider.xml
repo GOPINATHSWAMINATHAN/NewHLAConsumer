@@ -74,7 +74,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="9"
                 android:layout_height="wrap_content"
-                android:text="10KM + 10 MINS=100 SAR" />
+                 />
         </LinearLayout>
     </LinearLayout>
 

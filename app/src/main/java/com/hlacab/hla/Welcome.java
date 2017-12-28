@@ -4,10 +4,13 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -26,6 +29,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.ahmadrosid.lib.drawroutemap.DrawMarker;
+import com.ahmadrosid.lib.drawroutemap.DrawRouteMaps;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
@@ -55,6 +60,8 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -73,7 +80,16 @@ import com.hlacab.hla.model.Sender;
 import com.hlacab.hla.model.Token;
 import com.hlacab.hla.remote.IFCMService;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -95,10 +111,10 @@ public class Welcome extends AppCompatActivity
     private static int UPDATE_INTERVAL = 5000;
     private static int FASTEST_INTERVAL = 3000;
     private static int DISPLACEMENT = 10;
-
+LatLng pickupLocation,myDestination;
     DatabaseReference ref;
     GeoFire geoFire;
-    Marker mUserMarker;
+    Marker mUserMarker,markerDestination;
 
     ImageView imgExpandable;
     BottomSheetRiderFragment mBottomSheet;
@@ -175,8 +191,9 @@ public class Welcome extends AppCompatActivity
                 mPlaceLocation = place.getAddress().toString();
 
                 mMap.clear();
+                pickupLocation=place.getLatLng();
 
-                mUserMarker = mMap.addMarker(new MarkerOptions().position(place.getLatLng()).icon(BitmapDescriptorFactory.defaultMarker()).title("Pickup Here"));
+                mUserMarker = mMap.addMarker(new MarkerOptions().position(place.getLatLng()).icon(BitmapDescriptorFactory.fromResource(R.drawable.marker)).title("Pickup Here"));
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), 15.0f));
             }
 
@@ -192,9 +209,20 @@ public class Welcome extends AppCompatActivity
             public void onPlaceSelected(Place place) {
 
                 mPlaceDestination = place.getAddress().toString();
-                mMap.addMarker(new MarkerOptions().position(place.getLatLng()).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                myDestination=place.getLatLng();
+                mMap.addMarker(new MarkerOptions().position(place.getLatLng()).icon(BitmapDescriptorFactory.fromResource(R.drawable.destination_marker)).title("Destination"));
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), 15.0f));
-                BottomSheetRiderFragment mBottomSheet = BottomSheetRiderFragment.newInstance(mPlaceLocation, mPlaceDestination);
+               // showDirections(pickupLocation.latitude,pickupLocation.longitude,place.getLatLng().latitude,place.getLatLng().longitude);
+                //Polyline line=mMap.addPolyline(new PolylineOptions().add(pickupLocation,place.getLatLng()).width(5).color(Color.BLACK));
+
+                DrawRouteMaps.getInstance(Welcome.this).draw(pickupLocation,myDestination,mMap);
+               // DrawMarker.getInstance(Welcome.this).draw(mMap,pickupLocation,R.drawable.marker,"PickUp Location");
+                DrawMarker.getInstance(Welcome.this).draw(mMap,myDestination,R.drawable.destination_marker,"Destination Location");
+                LatLngBounds bounds=new LatLngBounds.Builder().include(pickupLocation).include(myDestination).build();
+                Point displaySize=new Point();
+                getWindowManager().getDefaultDisplay().getSize(displaySize);
+                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds,displaySize.x,250,30));
+                BottomSheetRiderFragment mBottomSheet = BottomSheetRiderFragment.newInstance(mPlaceLocation, mPlaceDestination,false);
                 Welcome.super.onPostResume();
                 mBottomSheet.show(getSupportFragmentManager(), mBottomSheet.getTag());
 
@@ -210,6 +238,17 @@ public class Welcome extends AppCompatActivity
         updateFirebaseToken();
 
     }
+
+//    public void showDirections(double lat, double lng, double lat1, double lng1) {
+//
+//        final Intent intent = new
+//                Intent(Intent.ACTION_VIEW, Uri.parse("http://maps.google.com/maps?" +
+//                "saddr=" + lat + "," + lng + "&daddr=" + lat1 + "," +
+//                lng1));
+//        intent.setClassName("com.google.android.apps.maps", "com.google.android.maps.MapsActivity");
+//        startActivity(intent);
+//
+//    }
 
 
     private void updateFirebaseToken() {
@@ -236,6 +275,7 @@ public class Welcome extends AppCompatActivity
                         @Override
                         public void onResponse(Call<FCMResponse> call, Response<FCMResponse> response) {
                             if (response.body().success == 1)
+                                //get the driver image and his details
                                 Toast.makeText(getApplicationContext(), "Request Sent!", Toast.LENGTH_LONG).show();
                             else
                                 Toast.makeText(getApplicationContext(), "Failed!", Toast.LENGTH_LONG).show();
@@ -376,11 +416,7 @@ public class Welcome extends AppCompatActivity
 
 
             //Add Marker
-            if (mUserMarker != null)
-                mUserMarker.remove();
-            mUserMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("You"));
-            //Move camera to  that position
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 15.0f));
+
 
 
             Log.d("EMDTDEV", String.format("Your location was changed: %f/%f", latitude, longitude));
@@ -396,10 +432,11 @@ public class Welcome extends AppCompatActivity
 
         //First we need to delete all markers on map
 
-        mMap.clear();
-        //After that, just add our location again
-
-        mMap.addMarker(new MarkerOptions().position(location).title("You"));
+        if (mUserMarker != null)
+            mUserMarker.remove();
+        mUserMarker = mMap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.marker)).position(location).title("You"));
+        //Move camera to  that position
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15.0f));
 
 
         DatabaseReference driverLocation = FirebaseDatabase.getInstance().getReference(Common.driver_tb1);
@@ -411,7 +448,7 @@ public class Welcome extends AppCompatActivity
             public void onKeyEntered(String key, final GeoLocation location) {
                 //Use Key to get email from table users
 
-//Table users is table when driver register account and update information
+                //Table users is table when driver register account and update information
                 //just open your driver to check this table name
                 FirebaseDatabase.getInstance().getReference(Common.user_driver_tb1).child(key).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -559,8 +596,25 @@ public class Welcome extends AppCompatActivity
         mMap = googleMap;
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setZoomControlsEnabled(true);
-        mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
+        mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.uber_style_map));
         mMap.setInfoWindowAdapter(new CustomInfoWindow(this));
+   mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+       @Override
+       public void onMapClick(LatLng latLng) {
+
+
+           if(markerDestination!=null)
+               markerDestination.remove();
+           markerDestination=mMap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.destination_marker)).position(latLng).title("Destination"));
+           mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,15.0f));
+
+
+           BottomSheetRiderFragment mBottomSheet = BottomSheetRiderFragment.newInstance(String.format("%f,%f",mLastLocation.getLatitude(), mLastLocation.getLongitude()),String.format("%f,%f",latLng.latitude,latLng.longitude),true);
+           mBottomSheet.show(getSupportFragmentManager(), mBottomSheet.getTag());
+
+       }
+   });
+
     }
 
     @Override
@@ -592,4 +646,5 @@ public class Welcome extends AppCompatActivity
         mLastLocation = location;
         displayLocation();
     }
+
 }
